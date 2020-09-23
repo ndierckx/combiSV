@@ -19,4 +19,8 @@ Perl
 Usage:
 
 <code>perl combiSV1.0.pl -pbsv <pbsv_output.vcf> -sniffles <sniffles_output.vcf> -nanovar <nanovar_output.vcf> -svim <svim_output.vcf> -s <1 or 2> -o <output_name></code>
+  
+  s option: <br> 
+  1 : Focus on precision  <br> 
+  2 : Focus on recall <br> 
 
