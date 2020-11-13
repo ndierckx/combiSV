@@ -1025,31 +1025,31 @@ POS_ALMOST2h:           my $pos_tmp = ($min*$v)+$pos;
     
 #Print SVs------------------------------------------------------------------
 
-my $output_sniffles = "Sniffles_".$output_file;
+my $output_sniffles = "Sniffles_".$output_file2;
 my $sniffles_count = keys %sniffles;
 if ($sniffles_count > 0)
 {
     open(SNIFFLES, ">" .$output_sniffles) or die "\nCan't open file $output_sniffles, $!\n";
 }
-my $output_pbsv = "pbsv_".$output_file;
+my $output_pbsv = "pbsv_".$output_file2;
 my $pbsv_count = keys %pbsv;
 if ($pbsv_count > 0)
 {
     open(PBSV, ">" .$output_pbsv) or die "\nCan't open file $output_pbsv, $!\n";
 }
-my $output_nanovar = "NanoVar_".$output_file;
+my $output_nanovar = "NanoVar_".$output_file2;
 my $nanovar_count = keys %nanovar;
 if ($nanovar_count > 0)
 {
     open(NANOVAR, ">" .$output_nanovar) or die "\nCan't open file $output_nanovar, $!\n";
 }
-my $output_svim = "SVIM_".$output_file;
+my $output_svim = "SVIM_".$output_file2;
 my $svim_count = keys %svim;
 if ($svim_count > 0)
 {
     open(SVIM, ">" .$output_svim) or die "\nCan't open file $output_svim, $!\n";
 }
-my $output_nanosv = "NanoSV_".$output_file;
+my $output_nanosv = "NanoSV_".$output_file2;
 my $nanosv_count = keys %nanosv;
 if ($nanosv_count > 0)
 {
