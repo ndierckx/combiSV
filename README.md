@@ -28,3 +28,6 @@ This is the combined standard vcf output
 
 #### 2. simplified_output_name.vcf: 
 This is a simplified vcf output that can be used as input for Sim-it
+
+#### 3. SVIM/Sniffles/pbsv/NanoVar/NanoSV_output_name.vcf: 
+For each VCF input, an output file of the SVs that were retained is given.
