@@ -2,6 +2,9 @@
 
 Combine structural variation outputs from long sequencing reads into a superior call set
 
+**Last updates: 30/03/21 version 1.1**  
+- SV calls from cuteSV can be added to combiSV
+
 ### Getting help
 
 Any issues/requests/problems/comments that are not yet addressed on this page can be posted on [Github issues](https://github.com/ndierckx/Sim-it/issues) and I will try to reply the same day.
