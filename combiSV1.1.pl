@@ -5,7 +5,7 @@
 #              All Rights Reserved                   #
 #         See file LICENSE for details.              #
 ######################################################
-#                    combiSV 1.2
+#                    combiSV 1.1
 #           nicolasdierckxsens@hotmail.com
 use strict;
 use Getopt::Long;
