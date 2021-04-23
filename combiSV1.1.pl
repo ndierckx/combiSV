@@ -92,6 +92,11 @@ if ($input_nanosv ne "")
     $total_tools++;
 }
 
+if ($input_sniffles eq "" && $input_cutesv eq "")
+{
+    die "\n\nError: A Sniffles or cuteSV input is mandatory.\n\n";
+}
+
 if ($output_file eq "")
 {
     $output_file = "combiSV";
