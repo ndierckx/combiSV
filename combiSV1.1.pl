@@ -5,19 +5,20 @@
 #              All Rights Reserved                   #
 #         See file LICENSE for details.              #
 ######################################################
-#                    combiSV 1.0
+#                    combiSV 1.2
 #           nicolasdierckxsens@hotmail.com
 use strict;
 use Getopt::Long;
 
 print "\n\n-----------------------------------------------";
 print "\ncombiSV\n";
-print "Version 1.0\n";
-print "Author: Nicolas Dierckxsens, (c) 2020\n";
+print "Version 1.1\n";
+print "Author: Nicolas Dierckxsens, (c) 2020-2021\n";
 print "-----------------------------------------------\n\n";
 
 my $input_pbsv = "";
 my $input_sniffles = "";
+my $input_cutesv = "";
 my $input_nanovar = "";
 my $input_svim = "";
 my $output_file = "";
@@ -27,10 +28,12 @@ my $input_nanosv = "";
 my $count_tools = "2";
 my $min_coverage = '3';
 my $length_match = '250';
+my $min_SV_length = '50';
 
 GetOptions (
             "pbsv=s" => \$input_pbsv,
             "sniffles=s" => \$input_sniffles,
+            "cutesv=s" => \$input_cutesv,
             "nanovar=s" => \$input_nanovar,
             "svim=s" => \$input_svim,
             "nanosv=s" => \$input_nanosv,
@@ -40,7 +43,7 @@ GetOptions (
 
 if ($input_pbsv eq "")
 {
-    print "\n\nUsage:     perl combiSV1.0.pl -pbsv <pbsv_output.vcf> -sniffles <sniffles_output.vcf> -nanovar <nanovar_output.vcf> -svim <svim_output.vcf> -nanosv <nanosv_output.vcf> -c <integer> -o <output_name>\n\n";
+    print "\n\nUsage:     perl combiSV1.1.pl -pbsv <pbsv_output.vcf> -sniffles <sniffles_output.vcf> -cutesv <cutesv_output.vcf> -nanovar <nanovar_output.vcf> -svim <svim_output.vcf> -nanosv <nanosv_output.vcf> -c <integer> -o <output_name>\n\n";
     print "-c     minimum coverage of variation allele [default = 3]\n";
     print "-o     name of the output files\n";
 }
@@ -60,24 +63,32 @@ else
 if ($min_coverage < 2)
 {
     $min_coverage = '2';
-    print "\n\nWARNING: minimum coverage of variation allele too low, set to 2\n\n";
+    print "\n\nWARNING: minimum coverage of variation allele too low, has been set to 2\n\n";
 }
 
 open(INPUT_PBSV, $input_pbsv) or die "\n\nCan't open pbsv's vcf file $input_pbsv, $!\n\n";
-open(INPUT_SNIFFLES, $input_sniffles) or die "\n\nCan't open sniffles' vcf file $input_sniffles, $!\n\n";
+if ($input_sniffles ne "")
+{
+    open(INPUT_SNIFFLES, $input_sniffles) or die "\n\nCan't open Sniffles' vcf file $input_sniffles, $!\n\n";
+}
+if ($input_cutesv ne "")
+{
+    open(INPUT_CUTESV, $input_cutesv) or die "\n\nCan't open cuteSV's vcf file $input_cutesv, $!\n\n";
+    $total_tools++;
+}
 if ($input_nanovar ne "")
 {
-    open(INPUT_NANOVAR, $input_nanovar) or die "\n\nCan't open nanovar's vcf file $input_nanovar, $!\n\n";
+    open(INPUT_NANOVAR, $input_nanovar) or die "\n\nCan't open NanoVar's vcf file $input_nanovar, $!\n\n";
     $total_tools++;
 }
 if ($input_svim ne "")
 {
-    open(INPUT_SVIM, $input_svim) or die "\n\nCan't open svim's vcf file $input_svim, $!\n\n";
+    open(INPUT_SVIM, $input_svim) or die "\n\nCan't open SVIM's vcf file $input_svim, $!\n\n";
     $total_tools++;
 }
 if ($input_nanosv ne "")
 {
-    open(INPUT_NANOSV, $input_nanosv) or die "\n\nCan't open svim's vcf file $input_nanosv, $!\n\n";
+    open(INPUT_NANOSV, $input_nanosv) or die "\n\nCan't open NanoSV's vcf file $input_nanosv, $!\n\n";
     $total_tools++;
 }
 
@@ -126,6 +137,7 @@ my %SVs;
 my %count;
 my %pbsv;
 my %sniffles;
+my %cutesv;
 my %nanovar;
 my %mixed_types;
 my $lenght_margin1 = 0.70;
@@ -147,6 +159,7 @@ while (my $line = <INPUT_PBSV>)
         my @info = split /;/, $info;
         my @HAP = split /:/, $list[9];
         my @HAP2 = split /,/, $HAP[1];
+        my @HAP3 = split /,/, $HAP[3];
         
         my $chr = $list[0];
         if ($list[0] =~ m/chr(\d+|X|Y)/)
@@ -175,14 +188,15 @@ while (my $line = <INPUT_PBSV>)
             $SVLEN *= -1;
         }
         my $haplo = $HAP[0];
-        my $converted_line = $chr."\t".$list[1]."\t".$SVLEN."\t".$type."\t".$haplo;
         
+        my $converted_line = $chr."\t".$list[1]."\t".$SVLEN."\t".$type."\t".$haplo;
+
         if ($type ne "BND" && $type ne "cnv" && $list[6] eq "PASS" && ($type ne "DUP" || $high_recall eq "2" || $haplo eq "1/1") && ($HAP2[1] >= $min_coverage ||
-           ($HAP2[1] >= $min_coverage-1 && $HAP2[1]/$HAP[2] > 0.4)) && $HAP2[1]/$HAP[2] > 0.1 && $haplo ne "0/0")
+           ($HAP2[1] >= $min_coverage-1 && $HAP2[1]/$HAP[2] > 0.3)) && $haplo ne "0/0" && $HAP2[1]/$HAP[2] > 0.3 && ($SVLEN eq "." || $SVLEN > 45))
         {                  
             $SVs{$chr}{$list[1]} = $converted_line;
             $count{$chr}{$list[1]} = '1';
-            if ($type eq "INV" || (($type eq "DEL" || $haplo eq "1/1") && $high_recall eq "2"))
+            if ($type eq "INV" || (($type eq "DEL" || $haplo eq "1/1") && $high_recall eq "2") && ($HAP2[1]+$HAP2[2]) > 9 && (($HAP3[2] > 1 && $HAP3[3] > 1) || $HAP3[2] eq "" || $HAP3[3] eq ""))
             {
                 $count{$chr}{$list[1]} = '2';
             }
@@ -195,226 +209,462 @@ while (my $line = <INPUT_PBSV>)
     }
 }
 
-
-SNIFFLES: while (my $line = <INPUT_SNIFFLES>)
+if ($input_sniffles ne "")
 {
-    chomp($line);
-    my $first = substr $line, 0, 1;
-    if ($first ne "#")
+SNIFFLES: while (my $line = <INPUT_SNIFFLES>)
     {
-        my @list = split /\t/, $line;
-        my $pos = $list[1];
-        my $length;
-        my $type;
-        my $v = '1';
-        my $min = '1';
-        
-        my $info = $list[7];      
-        my @info = split /;/, $info;
-        my @HAP = split /:/, $list[9];
-        
-        foreach my $info_tmp (@info)
+        chomp($line);
+        my $first = substr $line, 0, 1;
+        if ($first ne "#")
         {
-            my $first_five = substr $info_tmp, 0, 5;
-            if ($first_five eq "SVLEN")
+            my @list = split /\t/, $line;
+            my $pos = $list[1];
+            my $length;
+            my $type;
+            my $v = '1';
+            my $min = '1';
+            
+            my $info = $list[7];      
+            my @info = split /;/, $info;
+            my @HAP = split /:/, $list[9];
+            
+            foreach my $info_tmp (@info)
             {
-                $length = substr $info_tmp, 6;
-            }
-            elsif ($first_five eq "SVTYP")
-            {
-                $type = substr $info_tmp, 7;
-            }
-        }
-        if ($length eq "")
-        {
-            $length = ".";
-        }
-        if ($length < 0)
-        {
-            $length *= -1;
-        }
-        my $chr = $list[0];
-        if ($list[0] =~ m/chr(\d+|X|Y)/)
-        {
-            $chr = $1;
-        }
-        my $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t".$HAP[0];
-        
-        if (exists ($sniffles{$chr}{$list[1]}))
-        {
-            next SNIFFLES;
-        }
-        
-        if ($list[6] eq "PASS" && ($length eq "." || $length > 45) && ($HAP[2] >= $min_coverage || ($HAP[2] >= $min_coverage-1 && $HAP[2]/($HAP[2]+$HAP[1]) > 0.4))
-            && $HAP[2]/($HAP[2]+$HAP[1]) > 0.1 )
-        {
-            if (exists ($pbsv{$chr}{$list[1]}))
-            {
-                my $count_tmp = $count{$chr}{$list[1]};
-                $sniffles{$chr}{$list[1]} = $line;
-                
-                my @list2 = split /\t/, $SVs{$chr}{$list[1]};
-                my $new_pos = $pos;
-                my $new_length = $list2[2];
-                my $new_type = $list2[3];
-                my $new_haplo = $list2[4];
-
-                if (($list2[3] eq $type || $list2[3] eq "BND" || $list2[3] eq "." || ($type eq "." && $list2[3] ne "BND") || ($list2[3] ne "DEL" && $type ne "DEL" && $list2[3] ne "BND")))
+                my $first_five = substr $info_tmp, 0, 5;
+                if ($first_five eq "SVLEN")
                 {
-                    $count{$chr}{$list[1]} = $count_tmp+1;
-                    if ($type eq "INS" && $list2[3] ne $type && $type ne ".")
-                    {
-                        $new_type = $type; 
-                    }
-                    if ($list2[3] eq "BND" || ($list2[3] eq "INV" && ($type eq "DEL" || $type eq "INS")) || ($list2[3] eq "DUP" && $type eq "INS") || $list2[3] eq ".")
-                    {                 
-                        if ($length ne ".")
-                        {
-                            $new_length = $length;
-                        }
-                        if ($type ne ".")
-                        {
-                            $new_type = $type;
-                        }
-                    }
-                    if ($type eq "INV" || $list2[2] eq ".")
-                    {                                                                    
-                        if ($length ne ".")
-                        {
-                            $new_length = $length;
-                        }                                         
-                    }
-                    delete $SVs{$chr}{$pos};
-                    delete $count{$chr}{$pos};
-                    my $line2 = $list2[0]."\t".$new_pos."\t".$new_length."\t".$new_type."\t".$new_haplo;
-                    $SVs{$list2[0]}{$new_pos} = $line2;
-                    $count{$chr}{$new_pos} = $count_tmp+1;
-                    if ($type eq "INS")
-                    {
-                        $count{$chr}{$new_pos} = $count_tools;
-                    }
+                    $length = substr $info_tmp, 6;
                 }
-                
+                elsif ($first_five eq "SVTYP")
+                {
+                    $type = substr $info_tmp, 7;
+                }
+            }
+            if ($length eq "")
+            {
+                $length = ".";
+            }
+            if ($length < 0)
+            {
+                $length *= -1;
+            }
+            my $chr = $list[0];
+            if ($list[0] =~ m/chr(\d+|X|Y)/)
+            {
+                $chr = $1;
+            }
+            my $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t".$HAP[0];
+            
+            if (exists ($sniffles{$chr}{$list[1]}))
+            {
                 next SNIFFLES;
             }
-            else
+            
+            if ($list[6] eq "PASS" && ($length eq "." || $length > 45) && ($HAP[2] >= $min_coverage || ($HAP[2] >= $min_coverage-1 && $HAP[2]/($HAP[2]+$HAP[1]) > 0.3))
+                && $HAP[2]/($HAP[2]+$HAP[1]) > 0.1)
             {
-                while ($v < $length_match)
+                if (exists ($pbsv{$chr}{$list[1]}))
                 {
-POS_ALMOST2c:       my $pos_tmp = ($min*$v)+$pos;
-                    if (exists ($pbsv{$chr}{$pos_tmp}))
+                    my $count_tmp = $count{$chr}{$list[1]};
+                    $sniffles{$chr}{$list[1]} = $line;
+                    
+                    my @list2 = split /\t/, $SVs{$chr}{$list[1]};
+                    my $new_pos = $pos;
+                    my $new_length = $list2[2];
+                    my $new_type = $list2[3];
+                    my $new_haplo = $list2[4];
+    
+                    if (($list2[3] eq $type || $list2[3] eq "BND" || $list2[3] eq "." || ($type eq "." && $list2[3] ne "BND") || ($list2[3] ne "DEL" && $type ne "DEL" && $list2[3] ne "BND")))
                     {
-                        my $count_tmp = $count{$chr}{$pos_tmp};
-                        
-                        if (exists ($sniffles{$chr}{$pos_tmp}) && $high_recall eq "dg")
+                        $count{$chr}{$list[1]} = $count_tmp+1;
+                        if ($type eq "INS" && $list2[3] ne $type && $type ne ".")
                         {
-                            if ($min eq '1')
-                            {                   
-                                $min = '-1';
-                                goto POS_ALMOST2c;
-                            }
-                            else
+                            $new_type = $type; 
+                        }
+                        if ($list2[3] eq "BND" || ($list2[3] eq "INV" && ($type eq "DEL" || $type eq "INS")) || ($list2[3] eq "DUP" && $type eq "INS") || $list2[3] eq ".")
+                        {                 
+                            if ($length ne ".")
                             {
-                                $min = '1';
+                                $new_length = $length;
+                            }
+                            if ($type ne ".")
+                            {
+                                $new_type = $type;
                             }
                         }
-                        else
-                        {                  
-                            $sniffles{$chr}{$pos_tmp} = $line;                 
+                        if ($type eq "INV" || $list2[2] eq ".")
+                        {                                                                    
+                            if ($length ne ".")
+                            {
+                                $new_length = $length;
+                            }                                         
+                        }
+                        delete $SVs{$chr}{$pos};
+                        delete $count{$chr}{$pos};
+                        my $line2 = $list2[0]."\t".$new_pos."\t".$new_length."\t".$new_type."\t".$new_haplo;
+                        $SVs{$list2[0]}{$new_pos} = $line2;
+                        $count{$chr}{$new_pos} = $count_tmp+1;
+                        if ($type eq "INS")
+                        {
+                            $count{$chr}{$new_pos} = $count_tools;
+                        }
+                    }
+                    
+                    next SNIFFLES;
+                }
+                else
+                {
+                    while ($v < $length_match)
+                    {
+POS_ALMOST2c:           my $pos_tmp = ($min*$v)+$pos;
+                        if (exists ($pbsv{$chr}{$pos_tmp}))
+                        {
+                            my $count_tmp = $count{$chr}{$pos_tmp};
                             my @list2 = split /\t/, $SVs{$chr}{$pos_tmp};
                             
-                            if (($list2[3] eq $type || $list2[3] eq "BND" || $list2[3] eq "." || ($type eq "." && $list2[3] ne "BND") || ($list2[3] ne "DEL" && $type ne "DEL" && $list2[3] ne "BND"))
-                                && (($list2[2] > $length*$lenght_margin1 && $list2[2] < $length*$lenght_margin2) || ($length > $list2[2]*$lenght_margin1 && $length < $list2[2]*$lenght_margin2)
-                                    || $list2[3] eq "DUP" || $type eq "DUP" || $list2[2] eq "." || $length eq "."))
+                            if (exists ($sniffles{$chr}{$pos_tmp}) && $high_recall eq "dg")
                             {
-                                $count{$chr}{$pos_tmp} = $count_tmp+1;
-                                my $new_pos = $pos_tmp;
-                                my $new_length = $list2[2];
-                                my $new_type = $list2[3];
-                                my $new_haplo = $list2[4];
-                                
-                                if ($type eq "INS" && $list2[3] ne $type && $type ne ".")
-                                {                              
-                                    $new_type = $type;                                   
+                                if ($min eq '1')
+                                {                   
+                                    $min = '-1';
+                                    goto POS_ALMOST2c;
                                 }
-                                if ($list2[3] eq "BND" || ($list2[3] eq "INV" && ($type eq "DEL" || $type eq "INS")) || $list2[3] eq "." || ($type eq "INS" && $list2[3] ne $type))
-                                {        
-                                    if ($length ne ".")
-                                    {
-                                        $new_length = $length;
-                                    }
-                                    if ($type ne ".")
-                                    {
-                                        $new_type = $type;
-                                    }
-                                }
-                                if ($type eq "INV" || $list2[2] eq ".")
-                                {                                                                    
-                                    if ($length ne ".")
-                                    {
-                                        $new_length = $length;
-                                    }
-                                    $new_pos = $pos;
-                                }
-    
-                                delete $SVs{$chr}{$pos_tmp};
-                                delete $count{$chr}{$pos_tmp};
-                                my $line2 = $list2[0]."\t".$new_pos."\t".$new_length."\t".$new_type."\t".$new_haplo;
-                                $SVs{$list2[0]}{$new_pos} = $line2;
-                                $count{$chr}{$new_pos} = $count_tmp+1;
-                                if ($type eq "INS")
+                                else
                                 {
-                                    $count{$chr}{$new_pos} = $count_tools;
+                                    $min = '1';
                                 }
+                            }
+                            elsif (exists ($sniffles{$chr}{$pos_tmp}) && $list2[3] eq $type && ($list2[2] > $length*$lenght_margin1 && $list2[2] < $length*$lenght_margin2))
+                            {
+                                next SNIFFLES;
+                            }
+                            else
+                            {                  
+                                $sniffles{$chr}{$pos_tmp} = $line;                 
+           
+                                if (($list2[3] eq $type || $list2[3] eq "BND" || $list2[3] eq "." || ($type eq "." && $list2[3] ne "BND") || ($list2[3] ne "DEL" && $type ne "DEL" && $list2[3] ne "BND"))
+                                    && (($list2[2] > $length*$lenght_margin1 && $list2[2] < $length*$lenght_margin2) || ($length > $list2[2]*$lenght_margin1 && $length < $list2[2]*$lenght_margin2)
+                                        || $list2[3] eq "DUP" || $type eq "DUP" || $list2[2] eq "." || $length eq "."))
+                                {
+                                    $count{$chr}{$pos_tmp} = $count_tmp+1;
+                                    my $new_pos = $pos_tmp;
+                                    my $new_length = $list2[2];
+                                    my $new_type = $list2[3];
+                                    my $new_haplo = $list2[4];
+                                    
+                                    if ($type eq "INS" && $list2[3] ne $type && $type ne ".")
+                                    {                              
+                                        $new_type = $type;                                   
+                                    }
+                                    if ($list2[3] eq "BND" || ($list2[3] eq "INV" && ($type eq "DEL" || $type eq "INS")) || $list2[3] eq "." || ($type eq "INS" && $list2[3] ne $type))
+                                    {        
+                                        if ($length ne ".")
+                                        {
+                                            $new_length = $length;
+                                        }
+                                        if ($type ne ".")
+                                        {
+                                            $new_type = $type;
+                                        }
+                                    }
+                                    if ($type eq "INV" || $list2[2] eq ".")
+                                    {                                                                    
+                                        if ($length ne ".")
+                                        {
+                                            $new_length = $length;
+                                        }
+                                        $new_pos = $pos;
+                                    }
+        
+                                    delete $SVs{$chr}{$pos_tmp};
+                                    delete $count{$chr}{$pos_tmp};
+                                    my $line2 = $list2[0]."\t".$new_pos."\t".$new_length."\t".$new_type."\t".$new_haplo;
+                                    $SVs{$list2[0]}{$new_pos} = $line2;
+                                    $count{$chr}{$new_pos} = $count_tmp+1;
+                                    if ($type eq "INS")
+                                    {
+                                        $count{$chr}{$new_pos} = $count_tools;
+                                    }
+                                }
+                                next SNIFFLES;
                             }
                             next SNIFFLES;
                         }
-                        next SNIFFLES;
+                        elsif ($min eq '1')
+                        {                   
+                            $min = '-1';
+                            goto POS_ALMOST2c;
+                        }
+                        else
+                        {
+                            $min = '1';
+                        }
+                        $v++;
                     }
-                    elsif ($min eq '1')
-                    {                   
-                        $min = '-1';
-                        goto POS_ALMOST2c;
-                    }
-                    else
-                    {
-                        $min = '1';
-                    }
-                    $v++;
                 }
-            }
-            if ($type ne "INV" && $type ne "BND" && $high_recall ne "2")
-            {
-                $SVs{$chr}{$list[1]} = $converted_line;
-                $count{$chr}{$list[1]} = '1';
-                $sniffles{$chr}{$list[1]} = $line;
-                if ($type eq "INS" && $HAP[0] ne "0/0")
+                if ($type ne "INV" && $type ne "BND" && $high_recall ne "2")
                 {
-                    $count{$chr}{$list[1]} = '2';
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $count{$chr}{$list[1]} = '1';
+                    $sniffles{$chr}{$list[1]} = $line;
+                    if ($type eq "INS" && $HAP[0] ne "0/0" && ($HAP[2]+$HAP[1]) > 5)
+                    {
+                        $count{$chr}{$list[1]} = '2';
+                    }
+                }         
+                elsif (($type eq "INV" || $type eq "BND") && $high_recall eq "2")
+                {
+                    $count{$chr}{$list[1]} = '1';
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $sniffles{$chr}{$list[1]} = $line;
                 }
-            }         
-            elsif (($type eq "INV" || $type eq "BND") && $high_recall eq "2")
-            {
-                $count{$chr}{$list[1]} = '1';
-                $SVs{$chr}{$list[1]} = $converted_line;
-                $sniffles{$chr}{$list[1]} = $line;
-            }
-            elsif ($high_recall eq "2" && $HAP[0] ne "0/0")
-            {
-                $count{$chr}{$list[1]} = $count_tools;
-                $SVs{$chr}{$list[1]} = $converted_line;
-                $sniffles{$chr}{$list[1]} = $line;
-            }
-            elsif ($high_recall eq "2")
-            {
-                $count{$chr}{$list[1]} = '1';
-                $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t0/1";
-                $SVs{$chr}{$list[1]} = $converted_line;
-                $sniffles{$chr}{$list[1]} = $line;
+                elsif ($high_recall eq "2" && $HAP[0] ne "0/0" && ($HAP[2]+$HAP[1]) > 5)
+                {
+                    $count{$chr}{$list[1]} = $count_tools;
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $sniffles{$chr}{$list[1]} = $line;
+                }
+                elsif ($high_recall eq "2")
+                {
+                    $count{$chr}{$list[1]} = '1';
+                    $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t0/1";
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $sniffles{$chr}{$list[1]} = $line;
+                }
             }
         }
     }
 }
+
+
+if ($input_cutesv ne "")
+{
+CUTESV: while (my $line = <INPUT_CUTESV>)
+    {
+        chomp($line);
+        my $first = substr $line, 0, 1;
+        if ($first ne "#")
+        {
+            my @list = split /\t/, $line;
+            my $pos = $list[1];
+            my $length;
+            my $type;
+            my $v = '1';
+            my $min = '1';
+            
+            my $info = $list[7];      
+            my @info = split /;/, $info;
+            my @HAP = split /:/, $list[9];
+            
+            foreach my $info_tmp (@info)
+            {
+                my $first_five = substr $info_tmp, 0, 5;
+                if ($first_five eq "SVLEN")
+                {
+                    $length = substr $info_tmp, 6;
+                }
+                elsif ($first_five eq "SVTYP")
+                {
+                    $type = substr $info_tmp, 7;
+                }
+            }
+            if ($length eq "")
+            {
+                $length = ".";
+            }
+            if ($length < 0)
+            {
+                $length *= -1;
+            }
+            my $chr = $list[0];
+            if ($list[0] =~ m/chr(\d+|X|Y)/)
+            {
+                $chr = $1;
+            }
+            my $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t".$HAP[0];
+            
+            if (exists ($cutesv{$chr}{$list[1]}))
+            {
+                next CUTESV;
+            }
+            
+            if ($list[6] eq "PASS" && ($length eq "." || $length > 45) && ($HAP[2] >= $min_coverage || ($HAP[2] >= $min_coverage-1 && $HAP[2]/($HAP[2]+$HAP[1]) > 0.3))
+                && $HAP[2]/($HAP[2]+$HAP[1]) > 0.1)
+            {
+                if ((exists($pbsv{$chr}{$list[1]}) || exists($sniffles{$chr}{$list[1]})) && exists($SVs{$chr}{$list[1]}))
+                {
+                    my $count_tmp = $count{$chr}{$list[1]};
+                    $cutesv{$chr}{$list[1]} = $line;
+                    
+                    my @list2 = split /\t/, $SVs{$chr}{$list[1]};
+                    my $new_pos = $pos;
+                    my $new_length = $list2[2];
+                    my $new_type = $list2[3];
+                    my $new_haplo = $list2[4];
+    
+                    if (($list2[3] eq $type || $list2[3] eq "BND" || $list2[3] eq "." || ($type eq "." && $list2[3] ne "BND") || ($list2[3] ne "DEL" && $type ne "DEL" && $list2[3] ne "BND")))
+                    {
+                        $count{$chr}{$list[1]} = $count_tmp+1;
+                        if ($type eq "INS" && $list2[3] ne $type && $type ne ".")
+                        {
+                            $new_type = $type;        
+                        }
+                        if ($HAP[0] ne "." && ($type eq "INV" || $type eq "INS"))
+                        {
+                            $new_haplo = $HAP[0];
+                        }
+                        if ($list2[3] eq "BND" || ($list2[3] eq "INV" && ($type eq "DEL" || $type eq "INS")) || ($list2[3] eq "DUP" && $type eq "INS") || $list2[3] eq ".")
+                        {                 
+                            if ($length ne ".")
+                            {
+                                $new_length = $length;
+                            }
+                            if ($type ne ".")
+                            {
+                                $new_type = $type;
+                            }
+                        }
+                        if ($type eq "INV" || $list2[2] eq ".")
+                        {                                                                    
+                            if ($length ne ".")
+                            {
+                                $new_length = $length;
+                            }
+                            if ($HAP[0] ne ".")
+                            {
+                                $new_haplo = $HAP[0];
+                            }
+                        }
+                        delete $SVs{$chr}{$pos};
+                        delete $count{$chr}{$pos};
+                        my $line2 = $list2[0]."\t".$new_pos."\t".$new_length."\t".$new_type."\t".$new_haplo;
+                        $SVs{$list2[0]}{$new_pos} = $line2;
+                        $count{$chr}{$new_pos} = $count_tmp+1;
+                        if ($type eq "INS")
+                        {
+                            $count{$chr}{$new_pos} = $count_tools;
+                        }
+                    }
+                    
+                    next CUTESV;
+                }
+                else
+                {
+                    while ($v < $length_match)
+                    {
+POS_ALMOST2d:           my $pos_tmp = ($min*$v)+$pos;
+                       
+                        if ((exists($pbsv{$chr}{$pos_tmp}) || exists($sniffles{$chr}{$pos_tmp})) && exists($SVs{$chr}{$pos_tmp}))
+                        {
+                            my $count_tmp = $count{$chr}{$pos_tmp};
+                            my @list2 = split /\t/, $SVs{$chr}{$pos_tmp};
+                            
+                            if (exists ($cutesv{$chr}{$pos_tmp}) && $list2[3] eq $type && ($list2[2] > $length*$lenght_margin1 && $list2[2] < $length*$lenght_margin2))
+                            {
+                                next CUTESV;
+                            }
+                            else
+                            {                  
+                                $cutesv{$chr}{$pos_tmp} = $line;                 
+       
+                                if (($list2[3] eq $type || $list2[3] eq "BND" || $list2[3] eq "." || ($type eq "." && $list2[3] ne "BND") ||
+                                     ($list2[3] ne "DEL" && $type ne "DEL" && $list2[3] ne "BND")) && (($list2[2] > $length*$lenght_margin1 && $list2[2] < $length*$lenght_margin2) ||
+                                    ($length > $list2[2]*$lenght_margin1 && $length < $list2[2]*$lenght_margin2) || $list2[3] eq "DUP" || $type eq "DUP" || $list2[2] eq "." || $length eq "."))
+                                {
+                                    $count{$chr}{$pos_tmp} = $count_tmp+1;
+                                    my $new_pos = $pos_tmp;
+                                    my $new_length = $list2[2];
+                                    my $new_type = $list2[3];
+                                    my $new_haplo = $list2[4];
+                                    
+                                    if ($type eq "INS" && $list2[3] ne $type)
+                                    {                              
+                                        $new_type = $type;
+                                    }
+                                    if ($HAP[0] ne "." && ($type eq "INV" || $type eq "INS"))
+                                    {
+                                        $new_haplo = $HAP[0];
+                                    }
+                                    if ($list2[3] eq "BND" || ($list2[3] eq "INV" && ($type eq "DEL" || $type eq "INS")) || $list2[3] eq "." || ($type eq "INS" && $list2[3] ne $type))
+                                    {        
+                                        if ($length ne ".")
+                                        {
+                                            $new_length = $length;
+                                        }
+                                        if ($type ne ".")
+                                        {
+                                            $new_type = $type;
+                                        }
+                                    }
+                                    if ($type eq "INV" || $list2[2] eq ".")
+                                    {                                                                    
+                                        if ($length ne ".")
+                                        {
+                                            $new_length = $length;
+                                        }
+                                        $new_pos = $pos;
+                                    }
+        
+                                    delete $SVs{$chr}{$pos_tmp};
+                                    delete $count{$chr}{$pos_tmp};
+                                    my $line2 = $list2[0]."\t".$new_pos."\t".$new_length."\t".$new_type."\t".$new_haplo;
+                                    $SVs{$list2[0]}{$new_pos} = $line2;
+                                    $count{$chr}{$new_pos} = $count_tmp+1;
+                                    if ($type eq "INS")
+                                    {
+                                        $count{$chr}{$new_pos} = $count_tools;
+                                    }
+                                }
+                                next CUTESV;
+                            }
+                            next CUTESV;
+                        }
+                        elsif ($min eq '1')
+                        {                   
+                            $min = '-1';
+                            goto POS_ALMOST2d;
+                        }
+                        else
+                        {
+                            $min = '1';
+                        }
+                        $v++;
+                    }
+                }
+                if ($type ne "INV" && $type ne "BND" && $high_recall ne "2" && $HAP[2]/($HAP[2]+$HAP[1]) > 0.2)
+                {
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $count{$chr}{$list[1]} = '1';
+                    $cutesv{$chr}{$list[1]} = $line;
+                    if ($type eq "INS" && $HAP[0] ne "0/0" && ($HAP[2]+$HAP[1]) > 5)
+                    {
+                        $count{$chr}{$list[1]} = '2';
+                    }
+                }         
+                elsif (($type eq "INV" || $type eq "BND") && $high_recall eq "2" && $HAP[2]/($HAP[2]+$HAP[1]) > 0.2)
+                {
+                    $count{$chr}{$list[1]} = '1';
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $cutesv{$chr}{$list[1]} = $line;
+                }
+                elsif (($high_recall eq "2" || $type eq "INS") && $HAP[0] ne "0/0" && $HAP[2]/($HAP[2]+$HAP[1]) > 0.2)
+                {
+                    $count{$chr}{$list[1]} = $count_tools;
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $cutesv{$chr}{$list[1]} = $line;
+                }
+                elsif ($high_recall eq "2" && $HAP[2]/($HAP[2]+$HAP[1]) > 0.2)
+                {
+                    $count{$chr}{$list[1]} = '1';
+                    $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t0/1";
+                    $SVs{$chr}{$list[1]} = $converted_line;
+                    $cutesv{$chr}{$list[1]} = $line;
+                }
+            }
+        }
+    }
+}
+
 if ($input_nanovar ne "")
 {
 NANOVAR: while (my $line = <INPUT_NANOVAR>)
@@ -469,11 +719,11 @@ NANOVAR: while (my $line = <INPUT_NANOVAR>)
                 next NANOVAR;
             }
             
-            if (($HAP2[1] >= $min_coverage || ($HAP2[1] >= $min_coverage-1 && $HAP2[0]/($HAP_REF[0]+$HAP2[0]) > 0.4)) && $list[6] eq "PASS" && $type ne "."
-                && ($type ne "BND" || $high_recall eq "2") && ($HAP2[0]/($HAP_REF[0]+$HAP2[0]) > 0.1 || $HAP_REF[0] eq "."))
+            if (($HAP2[1] >= $min_coverage || ($HAP2[1] >= $min_coverage-1 && $HAP2[0]/($HAP_REF[0]+$HAP2[0]) > 0.3)) && $list[6] eq "PASS" && $type ne "."
+                && ($type ne "BND" || $high_recall eq "2") && ($HAP2[0]/($HAP_REF[0]+$HAP2[0]) > 0.1 || $HAP_REF[0] eq ".") && ($length eq "." || $length > 45))
             {    
                 my @list2 = split /\t/, $SVs{$chr}{$list[1]};
-                if ((exists($pbsv{$chr}{$list[1]}) || exists($sniffles{$chr}{$list[1]})) && exists($SVs{$chr}{$list[1]}))
+                if ((exists($pbsv{$chr}{$list[1]}) || exists($sniffles{$chr}{$list[1]}) || exists($cutesv{$chr}{$list[1]})) && exists($SVs{$chr}{$list[1]}))
                 {
                     my $count_tmp = $count{$chr}{$list[1]};
                     $nanovar{$chr}{$list[1]} = $line;                  
@@ -545,7 +795,7 @@ NANOVAR: while (my $line = <INPUT_NANOVAR>)
                     while ($v < $length_match)
                     {
 POS_ALMOST2f:           my $pos_tmp = ($min*$v)+$pos;
-                        if ((exists($pbsv{$chr}{$pos_tmp}) || exists($sniffles{$chr}{$pos_tmp})) && exists($SVs{$chr}{$pos_tmp}))
+                        if ((exists($pbsv{$chr}{$pos_tmp}) || exists($sniffles{$chr}{$pos_tmp}) || exists($cutesv{$chr}{$pos_tmp})) && exists($SVs{$chr}{$pos_tmp}))
                         {
                             my $count_tmp = $count{$chr}{$pos_tmp};
                             if (exists($nanovar{$chr}{$pos_tmp}) && $high_recall eq "gg")
@@ -731,8 +981,8 @@ SVIM: while (my $line = <INPUT_SVIM>)
                 $ratio = $support/($HAP[1])
             }
             
-            if ($list[6] eq "PASS" && ($support >= $min_coverage+1 || ($support >= $min_coverage-1 && $ratio > 0.4)) && $type ne "BND" && $hapi ne "0/0" &&
-                ($ratio > 0.1 || $HAP_INFO[1] eq "CN" || $HAP[1] eq "."))
+            if ($list[6] eq "PASS" && ($support >= $min_coverage || ($support >= $min_coverage-1 && $ratio > 0.3)) && $type ne "BND" && $hapi ne "0/0" &&
+                ($ratio > 0.2 || $HAP_INFO[1] eq "CN" || $HAP[1] eq ".") && ($length eq "." || $length > 45))
             {
             
                 my $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t".$hapi;
@@ -774,6 +1024,8 @@ SVIM: while (my $line = <INPUT_SVIM>)
                         if (exists($SVs{$chr}{$pos_tmp}))
                         {
                             my $count_tmp = $count{$chr}{$pos_tmp};
+                            my @list2 = split /\t/, $SVs{$chr}{$pos_tmp};
+                            
                             if ($count_tmp > 20)
                             {
                                 if ($min eq '1')
@@ -786,10 +1038,12 @@ SVIM: while (my $line = <INPUT_SVIM>)
                                     $min = '1';
                                 }
                             }
+                            elsif (exists($svim{$chr}{$pos_tmp}) && $list2[3] eq $type && ($list2[2] > $length*$lenght_margin1 && $list2[2] < $length*$lenght_margin2))
+                            {
+                                next SVIM;
+                            }
                             else
-                            {           
-                                my @list2 = split /\t/, $SVs{$chr}{$pos_tmp};
-                                                
+                            {                       
                                 my $new_pos = $pos_tmp;
                                 my $new_length = $list2[2];
                                 my $new_type = $list2[3];
@@ -838,7 +1092,7 @@ SVIM: while (my $line = <INPUT_SVIM>)
                 {
                     $svim{$chr}{$list[1]} = $line;
                     $SVs{$chr}{$list[1]} = $converted_line;
-                    if ($hapi eq "1/1")
+                    if ($hapi eq "1/1" && $HAP[1] > 5)
                     {
                         $count{$chr}{$list[1]} = $count_tools;
                     }
@@ -902,12 +1156,10 @@ NANOSV: while (my $line = <INPUT_NANOSV>)
 
             my $converted_line = $chr."\t".$list[1]."\t".$length."\t".$type."\t".$hapi;
             
-            if (($HAP2[1] >= $min_coverage+1 )
-                && ($HAP2[0]/($HAP_REF[0]+$HAP2[0]) > 0.1 || $HAP_REF[0] eq ".") && $hapi ne "0/0")
-            { 
-                
+            if (($HAP2[1] >= $min_coverage+1 ) && ($HAP2[0]/($HAP_REF[0]+$HAP2[0]) > 0.2 || $HAP_REF[0] eq ".") && $hapi ne "0/0" && ($length eq "." || $length > 45))
+            {                
                 $nanosv{$chr}{$list[1]} = $line;
-                if (exists($SVs{$chr}{$list[1]}) && (exists($pbsv{$list[0]}{$list[1]}) || (exists($sniffles{$list[0]}{$list[1]})) || (exists($nanovar{$list[0]}{$list[1]})) || exists($svim{$list[0]}{$list[1]})))
+                if (exists($SVs{$chr}{$list[1]}) && (exists($pbsv{$list[0]}{$list[1]}) || (exists($sniffles{$list[0]}{$list[1]})) || (exists($nanovar{$list[0]}{$list[1]})) || exists($svim{$list[0]}{$list[1]}) || exists($cutesv{$chr}{$list[1]})))
                 {
                     my $count_tmp = $count{$chr}{$list[1]};
                     my @list3 = split /\t/, $SVs{$chr}{$list[1]};
@@ -950,7 +1202,7 @@ NANOSV: while (my $line = <INPUT_NANOSV>)
                     while ($v < $length_match)
                     {
 POS_ALMOST2h:           my $pos_tmp = ($min*$v)+$pos;
-                        if (exists($SVs{$chr}{$pos_tmp}) && (exists($pbsv{$list[0]}{$pos_tmp}) || exists($sniffles{$list[0]}{$pos_tmp}) || exists($nanovar{$list[0]}{$pos_tmp}) || exists($svim{$list[0]}{$pos_tmp})))
+                        if (exists($SVs{$chr}{$pos_tmp}) && (exists($pbsv{$list[0]}{$pos_tmp}) || exists($sniffles{$list[0]}{$pos_tmp}) || exists($cutesv{$chr}{$pos_tmp}) || exists($nanovar{$list[0]}{$pos_tmp}) || exists($svim{$list[0]}{$pos_tmp})))
                         {
                             my $count_tmp = $count{$chr}{$pos_tmp};
                             my @list3 = split /\t/, $SVs{$chr}{$list[1]};
@@ -1055,10 +1307,17 @@ if ($nanosv_count > 0)
 {
     open(NANOSV, ">" .$output_nanosv) or die "\nCan't open file $output_nanosv, $!\n";
 }
+
+my $output_cutesv = "cuteSV_".$output_file2;
+my $cutesv_count = keys %cutesv;
+if ($cutesv_count > 0)
+{
+    open(CUTESV, ">" .$output_cutesv) or die "\nCan't open file $output_cutesv, $!\n";
+}
 my $datetime = localtime();   
 print COMBINED2 "##fileformat=VCFv4.2\n";
 print COMBINED2 "##fileDate=".$datetime."\n";
-print COMBINED2 "##source=combiSV-v1.0\n";
+print COMBINED2 "##source=combiSV-v1.1\n";
 print COMBINED2 "##ALT=<ID=DEL,Description=\"Deletion\">\n";
 print COMBINED2 "##ALT=<ID=INV,Description=\"Inversion\">\n";
 print COMBINED2 "##ALT=<ID=DUP,Description=\"Duplication\">\n";
@@ -1132,6 +1391,21 @@ foreach my $chr2 (sort {$a <=> $b} keys %SVs)
                         else
                         {
                             $SV_callers .= ",pbsv";
+                        }                       
+                    }
+                }
+                if ($cutesv_count > 0)
+                {
+                    if (exists($cutesv{$chr2}{$pos2}))
+                    {
+                        print CUTESV $cutesv{$chr2}{$pos2}."\n";
+                        if ($SV_callers eq "")
+                        {
+                            $SV_callers = "cutesv";
+                        }
+                        else
+                        {
+                            $SV_callers .= ",cutesv";
                         }                       
                     }
                 }
@@ -1246,6 +1520,21 @@ foreach my $chr2 (sort {$a <=> $b} keys %SVs)
                     }       
                 }
             }
+            if ($cutesv_count > 0)
+            {
+                if (exists($cutesv{$chr2}{$pos2}))
+                {
+                    print CUTESV $cutesv{$chr2}{$pos2}."\n";
+                    if ($SV_callers eq "")
+                    {
+                        $SV_callers = "cutesv";
+                    }
+                    else
+                    {
+                        $SV_callers .= ",cutesv";
+                    }                       
+                }
+            }
             if ($nanovar_count > 0)
             {
                 if (exists($nanovar{$chr2}{$pos2}))
@@ -1312,10 +1601,12 @@ print "BND          :  ".$BND_count."\n\n";
 
 close SNIFFLES;
 close PBSV;
+close CUTESV;
 close NANOVAR;
 close SVIM;
 close NANOSV;
 close INPUT_SNIFFLES;
+close INPUT_CUTESV;
 close INPUT_SVIM;
 close INPUT_NANOVAR;
 close INPUT_PBSV;
