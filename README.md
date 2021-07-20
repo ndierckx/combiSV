@@ -2,8 +2,10 @@
 
 Combine structural variation outputs from long sequencing reads into a superior call set
 
-**Last updates: 30/03/21 version 1.1**  
+**Last updates: 20/07/21 version 2.0**  
 - SV calls from cuteSV can be added to combiSV
+- Only Sniffles or cuteSV is obligatory to run combiSV
+- Improved precission
 
 ### Getting help
 
@@ -21,7 +23,7 @@ Perl<br>
 
 Usage:
 
-<code>perl combiSV1.0.pl -pbsv <pbsv_output.vcf> -sniffles <sniffles_output.vcf> -nanovar <nanovar_output.vcf> -svim <svim_output.vcf> -nanosv <nanosv_output.vcf> -c <minimum_variance_allele_coverage> -o <output_name></code>
+<code>perl combiSV2.0.pl -pbsv <pbsv_output.vcf> -sniffles <sniffles_output.vcf> -cutesv <cutesv_output.vcf> -nanovar <nanovar_output.vcf> -svim <svim_output.vcf> -nanosv <nanosv_output.vcf> -c <minimum_variance_allele_coverage> -o <output_name></code>
  
 
 ### Output
