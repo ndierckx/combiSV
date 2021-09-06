@@ -5,7 +5,7 @@ Combine structural variation outputs from long sequencing reads into a superior 
 **Last updates: 20/07/21 version 2.0**  
 - SV calls from cuteSV can be added to combiSV
 - Only Sniffles or cuteSV is obligatory to run combiSV
-- Improved precission
+- Improved precision
 
 ### Getting help
 
