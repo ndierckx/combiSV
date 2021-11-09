@@ -5,14 +5,14 @@
 #              All Rights Reserved                   #
 #         See file LICENSE for details.              #
 ######################################################
-#                    combiSV 2.0
+#                    combiSV 2.1
 #           nicolasdierckxsens@hotmail.com
 use strict;
 use Getopt::Long;
 
 print "\n\n-----------------------------------------------";
 print "\ncombiSV\n";
-print "Version 2.0\n";
+print "Version 2.1\n";
 print "Author: Nicolas Dierckxsens, (c) 2020-2021\n";
 print "-----------------------------------------------\n\n";
 
@@ -41,9 +41,10 @@ GetOptions (
             "o=s" => \$output_file,
             ) or die "Incorrect usage!\n";
 
-if ($input_sniffles eq "" && $input_cutesv eq "")
+if ($input_sniffles eq "" && $input_cutesv eq "" && $input_pbsv eq "" && $input_svim eq "")
 {
-    print "\n\nUsage:     perl combiSV2.0.pl -pbsv <pbsv_output.vcf> -sniffles <sniffles_output.vcf> -cutesv <cutesv_output.vcf> -nanovar <nanovar_output.vcf> -svim <svim_output.vcf> -nanosv <nanosv_output.vcf> -c <integer> -o <output_name>\n\n";
+    print "\n\nUsage:     perl combiSV2.1.pl -pbsv <pbsv_output.vcf> -sniffles <sniffles_output.vcf> -cutesv <cutesv_output.vcf> -nanovar <nanovar_output.vcf> -svim <svim_output.vcf> -nanosv <nanosv_output.vcf>\n\n";
+    print "\nOPTIONAL ARGUMENTS\n";
     print "-c     minimum coverage of variation allele [default = 3]\n";
     print "-o     name of the output files\n";
 }
@@ -96,9 +97,9 @@ if ($input_nanosv ne "")
     $total_tools++;
 }
 
-if ($input_sniffles eq "" && $input_cutesv eq "")
+if ($input_sniffles eq "" && $input_cutesv eq "" && $input_pbsv eq "" && $input_svim eq "")
 {
-    die "\n\nError: A Sniffles or cuteSV input is mandatory.\n\n";
+    die "\n\nError: A Sniffles, pbsv, SVIM or cuteSV input is mandatory.\n\n";
 }
 
 if ($output_file eq "")
@@ -127,15 +128,15 @@ if ($high_recall ne "" && $high_recall ne "1" && $high_recall ne "2")
     die "\n\nIncorrect usage of -s parameter, should be '1' or '2'\n\n";
 }
 
-if ($total_tools > "4")
+if ($total_tools > '5')
 {
-    $count_tools = "3";
-    $high_recall = "2";
+    $count_tools = '3';
+    $high_recall = '2';
 }
-elsif ($total_tools <= 4)
+elsif ($total_tools <= 5)
 {
-    $count_tools = "2";
-    $high_recall = "2";
+    $count_tools = '2';
+    $high_recall = '2';
 }
 
 
@@ -1650,7 +1651,7 @@ POS_ALMOST2g:           my $pos_tmp = ($min*$v)+$pos;
 
                 $svim{$chr}{$list[1]} = $line;
                 $SVs{$chr}{$list[1]} = $converted_line;
-                if ($hapi eq "1/1" && $HAP[1] > 3)
+                if ($hapi eq "1/1")
                 {
                     $count{$chr}{$list[1]} = $count_tools;
                 }
@@ -1843,7 +1844,7 @@ NANOSV: while (my $line = <INPUT_NANOSV>)
                         elsif ($hapi ne "./.")
                         {                             
                             $new_haplo = $hapi;                           
-                        }  
+                        } 
                                         
                         delete $SVs{$chr}{$pos};
                         delete $count{$chr}{$pos};
@@ -1987,7 +1988,6 @@ POS_ALMOST2h:           my $pos_tmp = ($min*$v)+$pos;
                                         {}
                                         elsif ($list2[3] eq "INV" && $length ne ".")
                                         {
-                                            $new_pos = $pos;
                                             $new_length = $length;
                                         }
                                         if (exists($pbsv{$chr}{$list[1]}))                                 
@@ -1995,7 +1995,13 @@ POS_ALMOST2h:           my $pos_tmp = ($min*$v)+$pos;
                                         elsif ($hapi ne "./.")
                                         {                             
                                             $new_haplo = $hapi;
-                                        }   
+                                        }
+                                        if (exists($pbsv{$chr}{$list[1]}))                                 
+                                        {}
+                                        else
+                                        {
+                                            $new_pos = $pos;
+                                        }
                                                         
                                         delete $SVs{$chr}{$pos_tmp};
                                         delete $count{$chr}{$pos_tmp};
