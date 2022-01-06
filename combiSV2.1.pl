@@ -2136,7 +2136,7 @@ if ($cutesv_count > 0)
 my $datetime = localtime();   
 print COMBINED2 "##fileformat=VCFv4.2\n";
 print COMBINED2 "##fileDate=".$datetime."\n";
-print COMBINED2 "##source=combiSV-v1.1\n";
+print COMBINED2 "##source=combiSV-v2.1\n";
 print COMBINED2 "##ALT=<ID=DEL,Description=\"Deletion\">\n";
 print COMBINED2 "##ALT=<ID=INV,Description=\"Inversion\">\n";
 print COMBINED2 "##ALT=<ID=DUP,Description=\"Duplication\">\n";
@@ -2146,9 +2146,9 @@ print COMBINED2 "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of st
 print COMBINED2 "##INFO=<ID=SVLEN,Number=1,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">\n";
 print COMBINED2 "##INFO=<ID=SVCALLERS,Number=.,Type=String,Description=\"SV callers that support this SV\">\n";
 print COMBINED2 "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
-print COMBINED2 "#CHR\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSample\n";
+print COMBINED2 "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSample\n";
 
-print COMBINED "#CHR\tPOS\tSVLENGTH\tTYPE\tVARHAP\n";
+print COMBINED "#CHROM\tPOS\tSVLENGTH\tTYPE\tVARHAP\n";
 my %no_number;
 
 my $INS_count = '0';
