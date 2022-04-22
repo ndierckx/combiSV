@@ -2,7 +2,9 @@
 
 Combine structural variation outputs from long sequencing reads into a superior call set
 
-**Last updates: 09/11/21 version 2.1**  
+**Last updates: 22/04/22 version 2.2**  
+- combiSV now reports the END position and the allele depth calls (DR and DV), was needed to be compatible with SVanna              
+**09/11/21**                                                                                                                         
 - Only Sniffles, pbsv, SVIM or cuteSV are mandatory to run combiSV
 - Improved precision
 
