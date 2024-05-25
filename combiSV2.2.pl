@@ -110,10 +110,10 @@ if ($output_file eq "")
 }
 else
 {
-    my($filename, $dirs, $suffix) = fileparse($output_file);
+    my($filename, $dirs, $suffix) = fileparse($output_file, ('.vcf'));
     $suffix = ".vcf"; 
-    $output_file = $dirs.$filename.$suffix;
-    $output_file2 = $dirs.'simplified_'.$filename.$suffix;  
+    $output_file2 = $dirs.$filename.$suffix;
+    $output_file = $dirs.'simplified_'.$filename.$suffix;  
 }
 
 if ($high_recall eq "")
