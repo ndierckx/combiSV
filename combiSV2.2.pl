@@ -103,7 +103,7 @@ if ($input_sniffles eq "" && $input_cutesv eq "" && $input_pbsv eq "" && $input_
     die "\n\nError: A Sniffles, pbsv, SVIM or cuteSV input is mandatory.\n\n";
 }
 
-my($filename, $dirs, $suffix) = fileparse($output_file, ('.vcf'));
+my($filename, $dir, $suffix) = fileparse($output_file, ('.vcf'));
 
 if ($output_file eq "")
 {
@@ -113,8 +113,8 @@ if ($output_file eq "")
 else
 {
     $suffix = ".vcf"; 
-    $output_file = $dirs.$filename.$suffix;
-    $output_file2 = $dirs.'simplified_'.$filename.$suffix;  
+    $output_file = $dir.$filename.$suffix;
+    $output_file2 = $dir.'simplified_'.$filename.$suffix;  
 }
 
 if ($high_recall eq "")
