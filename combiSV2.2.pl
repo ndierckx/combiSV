@@ -109,12 +109,13 @@ if ($output_file eq "")
 {
     $output_file = "combiSV.vcf";
     $output_file2 = "simplified_combiSV.vcf";
+    ($filename, $dir, $suffix) = fileparse($output_file, ('.vcf'));
 }
 else
 {
     $suffix = ".vcf"; 
-    $output_file = $dir.$filename.$suffix;
-    $output_file2 = $dir.'simplified_'.$filename.$suffix;  
+    $output_file2 = $dir.$filename.$suffix;
+    $output_file = $dir.'simplified_'.$filename.$suffix;  
 }
 
 if ($high_recall eq "")
