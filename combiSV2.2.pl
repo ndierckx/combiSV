@@ -2226,32 +2226,32 @@ POS_ALMOST2h:           my $pos_tmp = ($min*$v)+$pos;
     
 #Print SVs------------------------------------------------------------------
 
-my $output_sniffles = $dir."Sniffles_".$filename;
+my $output_sniffles = $dir."Sniffles_".$filename.$suffix;
 if ($input_sniffles ne "")
 {
     open(SNIFFLES, ">" .$output_sniffles) or die "\nCan't open file $output_sniffles, $!\n";
 }
-my $output_pbsv = $dir."pbsv_".$filename;
+my $output_pbsv = $dir."pbsv_".$filename.$suffix;
 if ($input_pbsv ne "")
 {
     open(PBSV, ">" .$output_pbsv) or die "\nCan't open file $output_pbsv, $!\n";
 }
-my $output_nanovar = $dir."NanoVar_".$filename;
+my $output_nanovar = $dir."NanoVar_".$filename.$suffix;
 if ($input_nanovar ne "")
 {
     open(NANOVAR, ">" .$output_nanovar) or die "\nCan't open file $output_nanovar, $!\n";
 }
-my $output_svim = $dir."SVIM_".$filename;
+my $output_svim = $dir."SVIM_".$filename.$suffix;
 if ($input_svim ne "")
 {
     open(SVIM, ">" .$output_svim) or die "\nCan't open file $output_svim, $!\n";
 }
-my $output_nanosv = $dir."NanoSV_".$filename;
+my $output_nanosv = $dir."NanoSV_".$filename.$suffix;
 if ($input_nanosv ne "")
 {
     open(NANOSV, ">" .$output_nanosv) or die "\nCan't open file $output_nanosv, $!\n";
 }
-my $output_cutesv = $dir."cuteSV_".$filename;
+my $output_cutesv = $dir."cuteSV_".$filename.$suffix;
 if ($input_cutesv ne "")
 {
     open(CUTESV, ">" .$output_cutesv) or die "\nCan't open file $output_cutesv, $!\n";
