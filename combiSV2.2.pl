@@ -9,6 +9,7 @@
 #           nicolasdierckxsens@hotmail.com
 use strict;
 use Getopt::Long;
+use File::Basename;
 
 print "\n\n-----------------------------------------------";
 print "\ncombiSV\n";
@@ -104,19 +105,15 @@ if ($input_sniffles eq "" && $input_cutesv eq "" && $input_pbsv eq "" && $input_
 
 if ($output_file eq "")
 {
-    $output_file = "combiSV";
-    $output_file2 = "simplified_combiSV";
+    $output_file = "combiSV.vcf";
+    $output_file2 = "simplified_combiSV.vcf";
 }
 else
 {
-    $output_file2 = $output_file;
-    $output_file = "simplified_".$output_file2;  
-}
-my $last_four = substr $output_file, -4, 4;
-if ($last_four ne ".vcf")
-{
-    $output_file .= ".vcf";
-    $output_file2 .= ".vcf";
+    my($filename, $dirs, $suffix) = fileparse($output_file);
+    $suffix = ".vcf"; 
+    $output_file = $dirs.$filename.$suffix;
+    $output_file2 = $dirs.'simplified_'.$filename.suffix;  
 }
 
 if ($high_recall eq "")
