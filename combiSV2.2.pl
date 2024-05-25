@@ -113,7 +113,7 @@ else
     my($filename, $dirs, $suffix) = fileparse($output_file);
     $suffix = ".vcf"; 
     $output_file = $dirs.$filename.$suffix;
-    $output_file2 = $dirs.'simplified_'.$filename.suffix;  
+    $output_file2 = $dirs.'simplified_'.$filename.$suffix;  
 }
 
 if ($high_recall eq "")
