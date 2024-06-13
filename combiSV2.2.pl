@@ -103,6 +103,11 @@ if ($input_sniffles eq "" && $input_cutesv eq "" && $input_pbsv eq "" && $input_
     die "\n\nError: A Sniffles, pbsv, SVIM or cuteSV input is mandatory.\n\n";
 }
 
+if ($output_file eq "")
+{
+    $output_file = "combiSV";
+}
+
 my($filename, $dir, $suffix) = fileparse($output_file, ('.vcf'));
 
 if ($output_file eq "")
