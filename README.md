@@ -18,6 +18,12 @@ Or you can contact me directly through the following email address:
 
 nicolasdierckxsens at hotmail dot com 
 
+
+### Cite
+
+Dierckxsens, N., Li, T., Vermeesch, J.R. et al. A benchmark of structural variation detection by long reads through a realistic simulated model. <i>Genome Biology</i>, <b>22</b>, 342 (2021). https://doi.org/10.1186/s13059-021-02551-4
+ 
+
 ### Prerequisites
 
 Perl<br> 
